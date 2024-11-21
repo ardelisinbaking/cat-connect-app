@@ -1,0 +1,72 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Waitlist {
+  id         Int      @id @default(autoincrement())
+  email      String   @unique
+  userType   String
+  signupDate DateTime @default(now())
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  userType      UserType
+  location      String?
+  bio           String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  catProfiles   CatProfile[]
+  visitRequests VisitRequest[] @relation("Visitor")
+  hostedVisits  VisitRequest[] @relation("Owner")
+}
+
+model CatProfile {
+  id          String    @id @default(cuid())
+  name        String
+  age         Int?
+  description String?
+  available   Boolean   @default(true)
+  ownerId     String
+  owner       User      @relation(fields: [ownerId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  visits      VisitRequest[]
+}
+
+model VisitRequest {
+  id          String    @id @default(cuid())
+  catId       String
+  visitorId   String
+  ownerId     String
+  status      VisitStatus
+  startTime   DateTime
+  endTime     DateTime
+  message     String?
+  cat         CatProfile @relation(fields: [catId], references: [id])
+  visitor     User      @relation("Visitor", fields: [visitorId], references: [id])
+  owner       User      @relation("Owner", fields: [ownerId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+enum UserType {
+  CAT_OWNER
+  CAT_LOVER
+}
+
+enum VisitStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+  CANCELLED
+}

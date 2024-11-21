@@ -2,17 +2,63 @@
 'use client'
 
 import React, { useState } from 'react';
-import { Card, CardContent } from '@/src/components/ui/card';
-import { Heart, Mail, Shield } from 'lucide-react';
+import { Card, CardContent } from 'components/ui/card';
+import { Heart, Mail, Shield, Loader2 } from 'lucide-react';
+
+// Add TypeScript types to match your Prisma schema
+type UserType = 'CAT_OWNER' | 'CAT_LOVER';
+
+interface SubmissionStatus {
+  loading: boolean;
+  error: string | null;
+  success: boolean;
+}
 
 const LandingPage = () => {
   const [email, setEmail] = useState('');
-  const [userType, setUserType] = useState('');
-  const [submitted, setSubmitted] = useState(false);
+  const [userType, setUserType] = useState<UserType | ''>('');
+  const [status, setStatus] = useState<SubmissionStatus>({
+    loading: false,
+    error: null,
+    success: false
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    
+    if (!email || !userType) {
+      setStatus({ ...status, error: 'Please fill in all fields' });
+      return;
+    }
+
+    setStatus({ loading: true, error: null, success: false });
+
+    try {
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          userType,
+          // You might want to add a default name based on email
+          name: email.split('@')[0],
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to join waitlist');
+      }
+
+      setStatus({ loading: false, error: null, success: true });
+    } catch (error) {
+      setStatus({
+        loading: false,
+        error: 'Failed to join waitlist. Please try again.',
+        success: false
+      });
+    }
   };
 
   return (
@@ -52,7 +98,7 @@ const LandingPage = () => {
         {/* Sign Up Form */}
         <Card className="max-w-md mx-auto">
           <CardContent className="p-6">
-            {!submitted ? (
+            {!status.success ? (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <h2 className="text-2xl font-semibold text-center mb-4">
                   Join the Waitlist
@@ -63,9 +109,9 @@ const LandingPage = () => {
                   <div className="space-x-4">
                     <button
                       type="button"
-                      onClick={() => setUserType('cat-owner')}
+                      onClick={() => setUserType('CAT_OWNER')}
                       className={`px-4 py-2 rounded-full ${
-                        userType === 'cat-owner' 
+                        userType === 'CAT_OWNER' 
                           ? 'bg-blue-500 text-white' 
                           : 'bg-gray-100'
                       }`}
@@ -74,9 +120,9 @@ const LandingPage = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setUserType('cat-lover')}
+                      onClick={() => setUserType('CAT_LOVER')}
                       className={`px-4 py-2 rounded-full ${
-                        userType === 'cat-lover' 
+                        userType === 'CAT_LOVER' 
                           ? 'bg-blue-500 text-white' 
                           : 'bg-gray-100'
                       }`}
@@ -97,11 +143,23 @@ const LandingPage = () => {
                   />
                 </div>
 
+                {status.error && (
+                  <div className="text-red-500 text-sm">{status.error}</div>
+                )}
+
                 <button
                   type="submit"
-                  className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
+                  disabled={status.loading}
+                  className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 disabled:opacity-50 flex items-center justify-center"
                 >
-                  Join Waitlist
+                  {status.loading ? (
+                    <>
+                      <Loader2 className="animate-spin mr-2" />
+                      Processing...
+                    </>
+                  ) : (
+                    'Join Waitlist'
+                  )}
                 </button>
               </form>
             ) : (
