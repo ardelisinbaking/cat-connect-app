@@ -1,11 +1,11 @@
-// prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Waitlist {
@@ -16,46 +16,46 @@ model Waitlist {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
+  id            String         @id @default(cuid())
+  email         String         @unique
   name          String?
   userType      UserType
   location      String?
   bio           String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   catProfiles   CatProfile[]
-  visitRequests VisitRequest[] @relation("Visitor")
   hostedVisits  VisitRequest[] @relation("Owner")
+  visitRequests VisitRequest[] @relation("Visitor")
 }
 
 model CatProfile {
-  id          String    @id @default(cuid())
+  id          String         @id @default(cuid())
   name        String
   age         Int?
   description String?
-  available   Boolean   @default(true)
+  available   Boolean        @default(true)
   ownerId     String
-  owner       User      @relation(fields: [ownerId], references: [id])
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  owner       User           @relation(fields: [ownerId], references: [id])
   visits      VisitRequest[]
 }
 
 model VisitRequest {
-  id          String    @id @default(cuid())
-  catId       String
-  visitorId   String
-  ownerId     String
-  status      VisitStatus
-  startTime   DateTime
-  endTime     DateTime
-  message     String?
-  cat         CatProfile @relation(fields: [catId], references: [id])
-  visitor     User      @relation("Visitor", fields: [visitorId], references: [id])
-  owner       User      @relation("Owner", fields: [ownerId], references: [id])
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id        String      @id @default(cuid())
+  catId     String
+  visitorId String
+  ownerId   String
+  status    VisitStatus
+  startTime DateTime
+  endTime   DateTime
+  message   String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  cat       CatProfile  @relation(fields: [catId], references: [id])
+  owner     User        @relation("Owner", fields: [ownerId], references: [id])
+  visitor   User        @relation("Visitor", fields: [visitorId], references: [id])
 }
 
 enum UserType {
