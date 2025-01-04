@@ -1,238 +1,189 @@
-'use client'
+"use client";
 
-import React, { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { 
-  Heart, 
-  Mail, // Remove this if not used, or keep for potential future use
-  Shield, 
-  Loader2, 
-  Cat, 
-  MapPin 
-} from 'lucide-react';
-import { motion } from 'framer-motion';
+import { useTheme } from "@/providers/theme-provider"
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Heart, MapPin, Shield, Moon, Sun } from 'lucide-react';
 
-// Add TypeScript types to match your Prisma schema
-type UserType = 'CAT_OWNER' | 'CAT_LOVER';
-
-interface SubmissionStatus {
-  loading: boolean;
-  error: string | null;
-  success: boolean;
-}
-
-const LandingPage = () => {
+export default function LandingPage() {
   const [email, setEmail] = useState('');
-  const [userType, setUserType] = useState<UserType | ''>('');
-  const [status, setStatus] = useState<SubmissionStatus>({
-    loading: false,
-    error: null,
-    success: false
-  });
+  const [userType, setUserType] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+  // const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const { theme, setTheme } = useTheme();
+
+  // Initialize theme
+  useEffect(() => {
+    // Check local storage first
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    const initialTheme = savedTheme ?? (prefersDark ? 'dark' : 'light');
+    setTheme(initialTheme as 'light' | 'dark');
+    
+    // Apply initial theme
+    document.documentElement.classList.toggle('dark', initialTheme === 'dark');
+  }, []);
+
+  // Theme toggle handler
+  const toggleTheme = () => {
+    setTheme(theme === "light" ? "dark" : "light")
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!email || !userType) {
-      setStatus({ ...status, error: 'Please select a user type and enter your email' });
-      return;
-    }
-
-    setStatus({ loading: true, error: null, success: false });
+    setError('');
+    setLoading(true);
 
     try {
       const response = await fetch('/api/waitlist', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          userType,
-          signupDate: new Date().toISOString()
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, userType }),
       });
 
       if (!response.ok) {
-        // Explicitly type the error handling
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to join waitlist');
+        const data = await response.json();
+        throw new Error(data.message || 'Something went wrong');
       }
 
-      setStatus({ loading: false, error: null, success: true });
-      // Clear form
-      setEmail('');
-      setUserType('');
-    } catch (error: unknown) {
-      // Use type guard to handle unknown error type
-      const errorMessage = 
-        error instanceof Error 
-          ? error.message 
-          : 'Failed to join waitlist. Please try again.';
-
-      setStatus({
-        loading: false,
-        error: errorMessage,
-        success: false
-      });
+      setSuccess(true);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      <div className="max-w-5xl mx-auto px-4 py-16">
-        {/* Hero Section with Motion */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-16"
-        >
-          <h1 className="text-5xl font-bold mb-6 text-gray-800 leading-tight">
+    <div className="min-h-screen bg-background transition-colors duration-200">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="fixed top-4 right-4 z-50"
+        onClick={toggleTheme}
+        type="button"
+      >
+        {theme === 'light' ? (
+          <Moon className="h-5 w-5" />
+        ) : (
+          <Sun className="h-5 w-5" />
+        )}
+      </Button>
+
+      <main className="container mx-auto px-4 py-12">
+        {/* Hero Section */}
+        <section className="text-center mb-16">
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
             Connecting Cat Lovers with Furry Friends
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-10">
+          <p className="text-xl md:text-2xl text-muted-foreground mb-8">
             Experience the joy of cats without the full-time commitment. Meet local cats, make new friends, and create purr-fect memories.
           </p>
-        </motion.div>
+        </section>
 
-        {/* Enhanced Features Grid */}
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ staggerChildren: 0.2 }}
-          className="grid md:grid-cols-3 gap-8 mb-16"
-        >
-          {[
-            {
-              icon: Heart,
-              color: 'text-red-500',
-              title: 'Find Local Cats',
-              description: 'Discover friendly cats in your neighborhood eager for cuddles and playtime',
-            },
-            {
-              icon: MapPin,
-              color: 'text-green-500',
-              title: 'Nearby Matches',
-              description: 'Connect with cat owners within a comfortable distance from your location',
-            },
-            {
-              icon: Shield,
-              color: 'text-purple-500',
-              title: 'Safe & Verified',
-              description: 'Rigorous user verification and safe meeting guidelines for peace of mind',
-            }
-          ].map((feature, index) => (
-            <motion.div 
-              key={feature.title}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.2 }}
-            >
-              <Card className="p-6 text-center hover:shadow-lg transition-all duration-300 h-full">
-                <feature.icon className={`w-12 h-12 mx-auto mb-4 ${feature.color}`} />
-                <h3 className="font-semibold text-xl mb-2">{feature.title}</h3>
-                <p className="text-gray-600">{feature.description}</p>
-              </Card>
-            </motion.div>
-          ))}
-        </motion.div>
+        {/* Features Grid */}
+        <section className="grid md:grid-cols-3 gap-8 mb-16">
+          <div className="bg-card p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow border">
+            <div className="mb-4 text-purple-600 dark:text-purple-400">
+              <Heart className="h-8 w-8" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2">Find Local Cats</h2>
+            <p className="text-muted-foreground">
+              Discover friendly cats in your neighborhood eager for cuddles and playtime
+            </p>
+          </div>
 
-        {/* Waitlist Signup */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <Card className="max-w-md mx-auto">
-            <CardContent className="p-8">
-              {!status.success ? (
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <h2 className="text-2xl font-bold text-center mb-4">
-                    Join Our Waitlist
-                  </h2>
-                  
-                  <div>
-                    <label className="block text-sm font-medium mb-2">I am a...</label>
-                    <div className="flex justify-center space-x-4">
-                      {[
-                        { type: 'CAT_OWNER', label: 'Cat Owner', icon: Cat },
-                        { type: 'CAT_LOVER', label: 'Cat Lover', icon: Heart }
-                      ].map(({ type, label, icon: Icon }) => (
-                        <button
-                          key={type}
-                          type="button"
-                          onClick={() => setUserType(type as UserType)}
-                          className={`
-                            flex items-center px-4 py-2 rounded-full 
-                            transition-all duration-300
-                            ${userType === type 
-                              ? 'bg-blue-500 text-white' 
-                              : 'bg-gray-100 hover:bg-gray-200'}
-                          `}
-                        >
-                          <Icon className="mr-2 w-5 h-5" />
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+          <div className="bg-card p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow border">
+            <div className="mb-4 text-purple-600 dark:text-purple-400">
+              <MapPin className="h-8 w-8" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2">Nearby Matches</h2>
+            <p className="text-muted-foreground">
+              Connect with cat owners within a comfortable distance from your location
+            </p>
+          </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@example.com"
-                      className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                      required
-                    />
-                  </div>
+          <div className="bg-card p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow border">
+            <div className="mb-4 text-purple-600 dark:text-purple-400">
+              <Shield className="h-8 w-8" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2">Safe & Verified</h2>
+            <p className="text-muted-foreground">
+              Rigorous user verification and safe meeting guidelines for peace of mind
+            </p>
+          </div>
+        </section>
 
-                  {status.error && (
-                    <div className="text-red-500 text-sm text-center">
-                      {status.error}
-                    </div>
-                  )}
-
-                  <button
-                    type="submit"
-                    disabled={status.loading}
-                    className="
-                      w-full bg-blue-500 text-white py-3 rounded-lg 
-                      hover:bg-blue-600 transition-colors
-                      disabled:opacity-50 flex items-center justify-center
-                    "
-                  >
-                    {status.loading ? (
-                      <>
-                        <Loader2 className="animate-spin mr-2" />
-                        Processing...
-                      </>
-                    ) : (
-                      'Join Waitlist'
-                    )}
-                  </button>
-                </form>
-              ) : (
-                <div className="text-center py-8">
-                  <h2 className="text-3xl font-bold mb-4 text-green-600">
-                    Thank You!
-                  </h2>
-                  <p className="text-gray-600 mb-6">
-                    You're on the list! We'll notify you about our launch soon.
-                  </p>
+        {/* Waitlist Form */}
+        <section className="max-w-md mx-auto bg-card p-8 rounded-xl shadow-md border">
+          <h2 className="text-2xl font-bold mb-6 text-center">Join Our Waitlist</h2>
+          
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-4">
+              <Label className="text-base">I am a...</Label>
+              <RadioGroup
+                value={userType}
+                onValueChange={setUserType}
+                className="flex gap-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="CAT_OWNER" id="cat-owner" />
+                  <Label htmlFor="cat-owner" className="cursor-pointer">
+                    Cat Owner
+                  </Label>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="CAT_LOVER" id="cat-lover" />
+                  <Label htmlFor="cat-lover" className="cursor-pointer">
+                    Cat Lover
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Address</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                required
+              />
+            </div>
+
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            {success ? (
+              <Alert>
+                <AlertDescription>
+                  Thanks for joining! We'll notify you when we launch.
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <Button 
+                type="submit" 
+                className="w-full"
+                disabled={loading || !email || !userType}
+              >
+                {loading ? 'Joining...' : 'Join Waitlist'}
+              </Button>
+            )}
+          </form>
+        </section>
+      </main>
     </div>
   );
-};
-
-export default LandingPage;
+}
