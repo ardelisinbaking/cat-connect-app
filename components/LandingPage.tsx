@@ -18,22 +18,10 @@ export default function LandingPage() {
   // const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const { theme, setTheme } = useTheme();
 
-  // Initialize theme
-  useEffect(() => {
-    // Check local storage first
-    const savedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    const initialTheme = savedTheme ?? (prefersDark ? 'dark' : 'light');
-    setTheme(initialTheme as 'light' | 'dark');
-    
-    // Apply initial theme
-    document.documentElement.classList.toggle('dark', initialTheme === 'dark');
-  }, []);
 
   // Theme toggle handler
   const toggleTheme = () => {
-    setTheme(theme === "light" ? "dark" : "light")
+    setTheme(theme === "dark" ? "light" : "dark")
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -80,7 +68,7 @@ export default function LandingPage() {
       <main className="container mx-auto px-4 py-12">
         {/* Hero Section */}
         <section className="text-center mb-16">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 pb-3 bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
             Connecting Cat Lovers with Furry Friends
           </h1>
           <p className="text-xl md:text-2xl text-muted-foreground mb-8">

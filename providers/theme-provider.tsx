@@ -16,7 +16,7 @@ type ThemeProviderState = {
 }
 
 const initialState: ThemeProviderState = {
-  theme: "light",
+  theme: "dark",
   setTheme: () => null,
 }
 
@@ -24,7 +24,7 @@ const ThemeProviderContext = createContext<ThemeProviderState>(initialState)
 
 export function ThemeProvider({
   children,
-  defaultTheme = "light",
+  defaultTheme = "dark",
   storageKey = "ui-theme",
   ...props
 }: ThemeProviderProps) {
@@ -32,6 +32,7 @@ export function ThemeProvider({
 
   useEffect(() => {
     const root = window.document.documentElement
+    localStorage.removeItem(storageKey)
     const savedTheme = localStorage.getItem(storageKey)
 
     if (savedTheme) {
@@ -39,10 +40,9 @@ export function ThemeProvider({
       root.classList.remove("light", "dark")
       root.classList.add(savedTheme)
     } else {
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
-      setTheme(prefersDark ? "dark" : "light")
+      setTheme("dark")
       root.classList.remove("light", "dark")
-      root.classList.add(prefersDark ? "dark" : "light")
+      root.classList.add("dark")
     }
   }, [storageKey])
 

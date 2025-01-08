@@ -15,7 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen bg-background font-sans antialiased">
-        <ThemeProvider defaultTheme="light" storageKey="cat-connection-theme">
+        <ThemeProvider defaultTheme="dark" storageKey="cat-connection-theme">
           <div className="relative flex min-h-screen flex-col">
             <div className="flex-1">{children}</div>
           </div>
