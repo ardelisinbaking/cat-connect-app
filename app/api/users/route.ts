@@ -1,14 +1,21 @@
-import { prisma } from 'lib/prisma'
+import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
-import { Prisma } from '@prisma/client'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 export async function GET() {
   try {
-    const users = await prisma.user.findMany({
-      include: {
-        catProfiles: true,
-      },
-    })
+    const { data: users, error } = await supabase
+      .from('User')
+      .select(`
+        *,
+        CatProfile (*)
+      `)
+    
+    if (error) throw error
     return NextResponse.json(users)
   } catch (error) {
     console.error('Failed to fetch users:', error)
@@ -28,25 +35,33 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
-    const user = await prisma.user.create({
-      data: {
+
+    const { data: user, error } = await supabase
+      .from('User')
+      .insert({
         email: body.email,
         name: body.name,
-        userType: body.userType,
+        userType: body.userType,  // Keeping camelCase as per schema
         location: body.location,
-      },
-    })
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      })
+      .select()
+      .single()
+
+    if (error) {
+      if (error.code === '23505') { // Postgres unique violation code
+        return NextResponse.json(
+          { error: 'Email already exists' },
+          { status: 400 }
+        )
+      }
+      throw error
+    }
+
     return NextResponse.json(user)
   } catch (error) {
     console.error('Failed to create user:', error)
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-    if (error.code === 'P2002') {
-      return NextResponse.json(
-        { error: 'Email already exists' },
-        { status: 400 }
-      )
-    }
-  }
     return NextResponse.json(
       { error: 'Failed to create user' },
       { status: 500 }
