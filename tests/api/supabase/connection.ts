@@ -48,13 +48,13 @@ export async function testConnection() {
         databaseAccess: false,
         details: error
       }
-    }
+    )
   }
 }
 
 // You can test the connection by running this file directly with Node
-if (require.main === module) {
-  testConnection()
-    .then(result => console.log(JSON.stringify(result, null, 2)))
-    .catch(console.error);
-}
+// if (require.main === module) {
+//   testConnection()
+//     .then(result => console.log(JSON.stringify(result, null, 2)))
+//     .catch(console.error);
+// }
