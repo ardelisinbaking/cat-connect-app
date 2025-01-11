@@ -48,7 +48,7 @@ export async function testConnection() {
         databaseAccess: false,
         details: error
       }
-    )
+    })
   }
 }
 
