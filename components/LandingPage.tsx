@@ -35,15 +35,17 @@ export default function LandingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, userType }),
       });
+      
+      const data = await response.json();
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Something went wrong');
+        setError(data.error || 'Something went wrong');        
+        // throw new Error(data.message || 'Something went wrong');
       }
 
       setSuccess(true);
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
