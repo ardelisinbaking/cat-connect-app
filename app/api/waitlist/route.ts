@@ -21,13 +21,17 @@ export async function POST(request: Request) {
     }
 
     // Check for existing waitlist entry
-    const { data: existingEntry } = await supabase
-      .from('waitlist')
+    const { data: existingEntries, error: existingError } = await supabase
+      .from('Waitlist')
       .select()
       .eq('email', email)
-      .single();
 
-    if (existingEntry) {
+      if (existingError) {
+        console.error('Error checking existing entry:', existingError);
+        throw existingError;
+      }
+
+    if (existingEntries && existingEntries.length > 0) {
       return NextResponse.json(
         { error: 'Email already registered' },
         { status: 400 }
@@ -35,8 +39,8 @@ export async function POST(request: Request) {
     }
 
     // Create new waitlist entry
-    const { data, error } = await supabase
-      .from('waitlist')
+    const { data, error: insertError } = await supabase
+      .from('Waitlist')
       .insert([
         {
           email,
@@ -45,71 +49,24 @@ export async function POST(request: Request) {
         },
       ])
       .select()
-      .single();
 
-    if (error) {
-      throw error;
+    if (insertError) {
+
+      console.error('Error inserting data:', {
+        code: insertError.code,
+        message: insertError.message,
+        details: insertError.details,
+        hint: insertError.hint 
+    });
+      throw insertError;
     }
 
-    return NextResponse.json(data, { status: 201 });
+    return NextResponse.json(data[0], { status: 201 });
   } catch (error) {
     console.error('Waitlist error:', error);
     return NextResponse.json(
-      { error: 'Failed to join waitlist' },
+      { error: 'Failed to join waitlist', details: error },
       { status: 500 }
     );
   }
 }
-
-
-
-
-// import { NextResponse } from 'next/server';
-// import { PrismaClient } from '@prisma/client';
-
-// const prisma = new PrismaClient();
-
-// export async function POST(request: Request) {
-//   try {
-//     const { email, userType, signupDate } = await request.json();
-
-//     // Validate input
-//     if (!email || !userType) {
-//       return NextResponse.json(
-//         { error: 'Email and user type are required' },
-//         { status: 400 }
-//       );
-//     }
-
-//     // Check for existing waitlist entry
-//     const existingEntry = await prisma.waitlist.findUnique({
-//       where: { email },
-//     });
-
-//     if (existingEntry) {
-//       return NextResponse.json(
-//         { error: 'Email already registered' },
-//         { status: 400 }
-//       );
-//     }
-
-//     // Create new waitlist entry
-//     const waitlistEntry = await prisma.waitlist.create({
-//       data: {
-//         email,
-//         userType,
-//         signupDate: new Date(signupDate),
-//       },
-//     });
-
-//     return NextResponse.json(waitlistEntry, { status: 201 });
-//   } catch (error) {
-//     console.error('Waitlist error:', error);
-//     return NextResponse.json(
-//       { error: 'Failed to join waitlist' },
-//       { status: 500 }
-//     );
-//   } finally {
-//     await prisma.$disconnect();
-//   }
-// }
