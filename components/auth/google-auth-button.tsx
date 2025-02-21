@@ -6,19 +6,25 @@ import { useState } from "react"
 export function GoogleAuthButton() {
   const { signInWithGoogle } = useAuth()
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   
   const handleSignIn = async () => {
     try {
       setLoading(true)
+      setError(null)
+      console.log('Starting Google sign in...')
       await signInWithGoogle()
+      console.log('Google sign in completed')
     } catch (error) {
       console.error('Error signing in with Google:', error)
+      setError(error instanceof Error ? error.message : 'Failed to sign in with Google')
     } finally {
       setLoading(false)
     }
   }
 
   return (
+  <div className="space-y-2">
     <Button 
       variant="outline" 
       className="w-full flex items-center justify-center gap-2"
@@ -35,5 +41,9 @@ export function GoogleAuthButton() {
       </svg>
       {loading ? 'Signing in...' : 'Continue with Google'}
     </Button>
+    {error && (
+        <p className="text-sm text-red-500 text-center">{error}</p>
+      )}
+  </div>
   )
 }
